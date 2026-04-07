@@ -317,7 +317,7 @@ function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 // isPeriod:true  = clickable row (HW or notes)
 // isNote:true    = notes slot (zero hour, advisory, activities, after school)
 // isNote:false   = homework slot (subject class)
-var SUBJECTS={1:'Math',2:'Spanish',3:'English',4:'PE',5:'Speech & Debate',6:'Science',7:'History'};
+var SUBJECTS={1:'Period 1',2:'Period 2',3:'Period 3',4:'Period 4',5:'Period 5',6:'Period 6',7:'Period 7'};
 
 // Exact period numbers per date, extracted directly from the planner PDF.
 // Each school day runs 5 consecutive periods (cycling 1-7).
