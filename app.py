@@ -317,47 +317,72 @@ function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 // isPeriod:true  = clickable row (HW or notes)
 // isNote:true    = notes slot (zero hour, advisory, activities, after school)
 // isNote:false   = homework slot (subject class)
-function getSched(dateStr){
-  var dow=new Date(dateStr).getDay(),isWed=dow===3,rot=ROTATIONS[dateStr];
-  if(NO_SCHOOL.has(dateStr)||!rot)return null;
+var SUBJECTS={1:'Math',2:'Spanish',3:'English',4:'PE',5:'Speech & Debate',6:'Science',7:'History'};
 
+// Exact period numbers per date, extracted directly from the planner PDF.
+// Each school day runs 5 consecutive periods (cycling 1-7).
+var DAY_PERIODS={
+  '2026-01-06':[1,2,3,4,5],'2026-01-07':[6,7,1,2,3],'2026-01-08':[4,5,6,7,1],'2026-01-09':[2,3,4,5,6],
+  '2026-01-12':[7,1,2,3,4],'2026-01-13':[5,6,7,1,2],'2026-01-14':[3,4,5,6,7],'2026-01-15':[1,2,3,4,5],'2026-01-16':[6,7,1,2,3],
+  '2026-01-20':[4,5,6,7,1],'2026-01-21':[2,3,4,5,6],'2026-01-22':[7,1,2,3,4],'2026-01-23':[5,6,7,1,2],
+  '2026-01-26':[3,4,5,6,7],'2026-01-27':[1,2,3,4,5],'2026-01-28':[6,7,1,2,3],'2026-01-29':[4,5,6,7,1],'2026-01-30':[2,3,4,5,6],
+  '2026-02-02':[7,1,2,3,4],'2026-02-03':[5,6,7,1,2],'2026-02-04':[3,4,5,6,7],'2026-02-05':[1,2,3,4,5],'2026-02-06':[6,7,1,2,3],
+  '2026-02-09':[4,5,6,7,1],'2026-02-10':[2,3,4,5,6],'2026-02-11':[7,1,2,3,4],'2026-02-12':[5,6,7,1,2],
+  '2026-02-17':[3,4,5,6,7],'2026-02-18':[1,2,3,4,5],'2026-02-19':[6,7,1,2,3],'2026-02-20':[4,5,6,7,1],
+  '2026-02-23':[2,3,4,5,6],'2026-02-24':[7,1,2,3,4],'2026-02-25':[5,6,7,1,2],'2026-02-26':[3,4,5,6,7],'2026-02-27':[1,2,3,4,5],
+  '2026-03-02':[6,7,1,2,3],'2026-03-03':[4,5,6,7,1],'2026-03-04':[2,3,4,5,6],'2026-03-05':[7,1,2,3,4],'2026-03-06':[5,6,7,1,2],
+  '2026-03-17':[3,4,5,6,7],'2026-03-18':[1,2,3,4,5],'2026-03-19':[6,7,1,2,3],'2026-03-20':[4,5,6,7,1],
+  '2026-03-23':[2,3,4,5,6],'2026-03-24':[7,1,2,3,4],'2026-03-25':[5,6,7,1,2],'2026-03-26':[3,4,5,6,7],'2026-03-27':[1,2,3,4,5],
+  '2026-03-30':[6,7,1,2,3],'2026-03-31':[4,5,6,7,1],'2026-04-01':[2,3,4,5,6],'2026-04-02':[7,1,2,3,4],
+  '2026-04-07':[5,6,7,1,2],'2026-04-08':[3,4,5,6,7],'2026-04-09':[1,2,3,4,5],'2026-04-10':[6,7,1,2,3],
+  '2026-04-13':[4,5,6,7,1],'2026-04-14':[2,3,4,5,6],'2026-04-15':[7,1,2,3,4],'2026-04-16':[5,6,7,1,2],'2026-04-17':[3,4,5,6,7],
+  '2026-04-20':[1,2,3,4,5],'2026-04-21':[6,7,1,2,3],'2026-04-22':[4,5,6,7,1],'2026-04-23':[2,3,4,5,6],'2026-04-24':[7,1,2,3,4],
+  '2026-04-27':[5,6,7,1,2],'2026-04-28':[3,4,5,6,7],'2026-04-29':[1,2,3,4,5],'2026-04-30':[6,7,1,2,3],
+  '2026-05-01':[4,5,6,7,1],'2026-05-04':[2,3,4,5,6],'2026-05-05':[7,1,2,3,4],'2026-05-06':[5,6,7,1,2],'2026-05-07':[3,4,5,6,7],'2026-05-08':[1,2,3,4,5],
+  '2026-05-11':[6,7,1,2,3],'2026-05-12':[4,5,6,7,1],'2026-05-13':[2,3,4,5,6],'2026-05-14':[7,1,2,3,4],'2026-05-15':[5,6,7,1,2]
+};
+
+function getSched(dateStr){
+  var dow=new Date(dateStr).getDay(),isWed=dow===3;
+  var ps=DAY_PERIODS[dateStr];
+  if(NO_SCHOOL.has(dateStr)||!ps)return null;
+  // WT = late-start Wed times, NT = normal day times
+  var WT=['8:30–9:25','9:30–10:25','11:10–12:05','1:05–2:00','2:05–3:00'];
+  var NT=['8:45–9:40','9:45–10:40','11:10–12:05','1:05–2:00','2:05–3:00'];
+  function slot(i,id,times){
+    var pnum=ps[i];
+    return{id:id,time:times[i],label:SUBJECTS[pnum]+' (P'+pnum+')',cls:'sched-period',isPeriod:true,isNote:false};
+  }
   if(isWed){
     return[
-      {id:'zh', time:'8:00\u20138:30',  label:'Zero Hour',            cls:'sched-period',  isPeriod:true, isNote:true},
-      {id:'p1', time:'8:30\u20139:25',  label:'Math',                 cls:'sched-period',  isPeriod:true, isNote:false},
-      {id:'adv',time:'9:25\u201310:25', label:'Advisory + Activities',cls:'sched-advisory',isPeriod:true, isNote:true},
-      {id:'p2', time:'10:25\u201311:10',label:'Spanish',              cls:'sched-period',  isPeriod:true, isNote:false},
-      {id:'p3', time:'11:10\u201312:05',label:'English',              cls:'sched-period',  isPeriod:true, isNote:false},
-      {id:'l8', time:'12:05\u201312:25',label:'Grade 8 Lunch',        cls:'sched-lunch',   isPeriod:false},
-      {id:'l6', time:'12:25\u201312:40',label:'Grade 6 Lunch',        cls:'sched-lunch',   isPeriod:false},
-      {id:'l7', time:'12:40\u20131:00', label:'Grade 7 Lunch \u2605', cls:'sched-lunch',   isPeriod:false},
-      {id:'p4', time:'1:05\u20132:00',  label:'PE',                   cls:'sched-period',  isPeriod:true, isNote:false},
-      {id:'p5', time:'2:05\u20133:00',  label:'Speech & Debate',      cls:'sched-period',  isPeriod:true, isNote:false}
+      {id:'zh', time:'8:00–8:30',  label:'Zero Hour',            cls:'sched-period',  isPeriod:true,isNote:true},
+      slot(0,'p1',WT),
+      slot(1,'p2',WT),
+      {id:'adv',time:'10:25–11:05',label:'Advisory + Activities',cls:'sched-advisory',isPeriod:true,isNote:true},
+      slot(2,'p3',WT),
+      {id:'l8', time:'12:05–12:25',label:'Grade 8 Lunch',        cls:'sched-lunch',   isPeriod:false},
+      {id:'l6', time:'12:25–12:40',label:'Grade 6 Lunch',        cls:'sched-lunch',   isPeriod:false},
+      {id:'l7', time:'12:40–1:00', label:'Grade 7 Lunch ★', cls:'sched-lunch',   isPeriod:false},
+      slot(3,'p4',WT),
+      slot(4,'p5',WT)
     ];
   }
-
-  // 7 subjects rotate; each day sees 5 consecutive ones
-  var S=['Math','Spanish','English','PE','Speech & Debate','Science','History'];
-  var ri='ABCDEFG'.indexOf(rot);
-  function s(o){return S[(ri+o)%7]}
-  var mid=dow===1&&['A','C','E','G'].indexOf(rot)!==-1?'Convocation':'Activities';
-
+  var midLabel=(dow===1&&[1,3,5,7].indexOf(ps[0])!==-1)?'Convocation':'Activities';
   return[
-    {id:'zh', time:'8:00\u20138:30',  label:'Zero Hour (Optional)', cls:'sched-period',  isPeriod:true, isNote:true},
-    {id:'adv',time:'8:30\u20138:40',  label:'Advisory',             cls:'sched-advisory',isPeriod:true, isNote:true},
-    {id:'p1', time:'8:45\u20139:40',  label:s(0),                   cls:'sched-period',  isPeriod:true, isNote:false},
-    {id:'p2', time:'9:45\u201310:40', label:s(1),                   cls:'sched-period',  isPeriod:true, isNote:false},
-    {id:'act',time:'10:40\u201311:10',label:mid,                    cls:'sched-activity',isPeriod:true, isNote:true},
-    {id:'p3', time:'11:10\u201312:05',label:s(2),                   cls:'sched-period',  isPeriod:true, isNote:false},
-    {id:'l8', time:'12:05\u201312:25',label:'Grade 8 Lunch',        cls:'sched-lunch',   isPeriod:false},
-    {id:'l6', time:'12:25\u201312:40',label:'Grade 6 Lunch',        cls:'sched-lunch',   isPeriod:false},
-    {id:'l7', time:'12:40\u20131:00', label:'Grade 7 Lunch \u2605', cls:'sched-lunch',   isPeriod:false},
-    {id:'p4', time:'1:05\u20132:00',  label:s(3),                   cls:'sched-period',  isPeriod:true, isNote:false},
-    {id:'p5', time:'2:05\u20133:00',  label:s(4),                   cls:'sched-period',  isPeriod:true, isNote:false},
-    {id:'as', time:'3:00+',           label:'After School',         cls:'sched-activity',isPeriod:true, isNote:true}
+    {id:'zh', time:'8:00–8:30',  label:'Zero Hour (Optional)', cls:'sched-period',  isPeriod:true,isNote:true},
+    {id:'adv',time:'8:30–8:40',  label:'Advisory',             cls:'sched-advisory',isPeriod:true,isNote:true},
+    slot(0,'p1',NT),
+    slot(1,'p2',NT),
+    {id:'act',time:'10:40–11:10',label:midLabel,               cls:'sched-activity',isPeriod:true,isNote:true},
+    slot(2,'p3',NT),
+    {id:'l8', time:'12:05–12:25',label:'Grade 8 Lunch',        cls:'sched-lunch',   isPeriod:false},
+    {id:'l6', time:'12:25–12:40',label:'Grade 6 Lunch',        cls:'sched-lunch',   isPeriod:false},
+    {id:'l7', time:'12:40–1:00', label:'Grade 7 Lunch ★', cls:'sched-lunch',   isPeriod:false},
+    slot(3,'p4',NT),
+    slot(4,'p5',NT),
+    {id:'as', time:'3:00+',           label:'After School',         cls:'sched-activity',isPeriod:true,isNote:true}
   ];
 }
-
 // ── Homework / Notes editor ──────────────────────────────────────────
 function openHWEdit(dateStr,pid,lbl,isNote){
   isNote=!!isNote;
