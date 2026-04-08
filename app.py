@@ -1,26 +1,29 @@
-"""
+“””
 Bolles MS Planner – Semester 2 2025-26
 Single-file Streamlit app. Deploy with just this file + requirements.txt.
-"""
+“””
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Bolles MS Planner · Semester 2",
-    page_icon="📒",
-    layout="wide",
+page_title=“Bolles MS Planner · Semester 2”,
+page_icon=“🎓”,
+layout=“wide”,
 )
 
-st.markdown("""
+st.markdown(”””
+
 <style>
   #MainMenu, header, footer { visibility: hidden; }
   .block-container { padding: 0 !important; max-width: 100% !important; }
   iframe { border: none; }
 </style>
-""", unsafe_allow_html=True)
 
-HTML = r"""<!DOCTYPE html>
+“””, unsafe_allow_html=True)
+
+HTML = r”””<!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -226,15 +229,18 @@ header{background:var(--navy);padding:0;position:sticky;top:0;z-index:100;box-sh
       </div>
     </div>
 
-    <div id="schedule-view">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:var(--navy)">All Events</div>
-        <div style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-light);letter-spacing:.1em">SEMESTER 2 &middot; 2025&ndash;26</div>
-      </div>
-      <div class="card">
-        <div class="card-body" id="all-events-list" style="padding:.5rem 1rem"></div>
-      </div>
-    </div>
+```
+<div id="schedule-view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:var(--navy)">All Events</div>
+    <div style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-light);letter-spacing:.1em">SEMESTER 2 &middot; 2025&ndash;26</div>
+  </div>
+  <div class="card">
+    <div class="card-body" id="all-events-list" style="padding:.5rem 1rem"></div>
+  </div>
+</div>
+```
+
   </main>
 </div>
 
@@ -317,7 +323,7 @@ function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 // isPeriod:true  = clickable row (HW or notes)
 // isNote:true    = notes slot (zero hour, advisory, activities, after school)
 // isNote:false   = homework slot (subject class)
-var SUBJECTS={1:'Period 1',2:'Period 2',3:'Period 3',4:'Period 4',5:'Period 5',6:'Period 6',7:'Period 7'};
+var SUBJECTS={1:'Math',2:'Spanish',3:'English',4:'PE',5:'Speech & Debate',6:'Science',7:'History'};
 
 // Exact period numbers per date, extracted directly from the planner PDF.
 // Each school day runs 5 consecutive periods (cycling 1-7).
@@ -347,22 +353,26 @@ function getSched(dateStr){
   var ps=DAY_PERIODS[dateStr];
   if(NO_SCHOOL.has(dateStr)||!ps)return null;
   // WT = late-start Wed times, NT = normal day times
-  var WT=['8:30–9:25','9:30–10:25','11:10–12:05','1:05–2:00','2:05–3:00'];
+  var WT=['8:55–9:50','9:55–10:50','11:10–12:05','1:05–2:00','2:05–3:00'];
   var NT=['8:45–9:40','9:45–10:40','11:10–12:05','1:05–2:00','2:05–3:00'];
   function slot(i,id,times){
     var pnum=ps[i];
     return{id:id,time:times[i],label:SUBJECTS[pnum]+' (P'+pnum+')',cls:'sched-period',isPeriod:true,isNote:false};
   }
   if(isWed){
+    // Late Start Wednesday (from planner):
+    // Zero Hour 8:00-8:30, Period1 8:55-9:50, Period2 9:55-10:50, Break 10:50-11:10,
+    // Period3 11:10-12:05, Lunch, Period4 1:05-2:00, Period5 2:05-3:00
+    // NO advisory on late start Wed — just a Break block.
     return[
-      {id:'zh', time:'8:00–8:30',  label:'Zero Hour',            cls:'sched-period',  isPeriod:true,isNote:true},
+      {id:'zh', time:'8:00–8:30',  label:'Zero Hour',      cls:'sched-period',  isPeriod:true, isNote:true},
       slot(0,'p1',WT),
       slot(1,'p2',WT),
-      {id:'adv',time:'10:25–11:05',label:'Advisory + Activities',cls:'sched-advisory',isPeriod:true,isNote:true},
+      {id:'brk',time:'10:50–11:10',label:'Break',          cls:'sched-activity',isPeriod:true, isNote:true},
       slot(2,'p3',WT),
-      {id:'l8', time:'12:05–12:25',label:'Grade 8 Lunch',        cls:'sched-lunch',   isPeriod:false},
-      {id:'l6', time:'12:25–12:40',label:'Grade 6 Lunch',        cls:'sched-lunch',   isPeriod:false},
-      {id:'l7', time:'12:40–1:00', label:'Grade 7 Lunch ★', cls:'sched-lunch',   isPeriod:false},
+      {id:'l8', time:'12:05–12:25',label:'Grade 8 Lunch',  cls:'sched-lunch',   isPeriod:false},
+      {id:'l6', time:'12:25–12:40',label:'Grade 6 Lunch',  cls:'sched-lunch',   isPeriod:false},
+      {id:'l7', time:'12:40–1:00', label:'Grade 7 Lunch ★',cls:'sched-lunch',isPeriod:false},
       slot(3,'p4',WT),
       slot(4,'p5',WT)
     ];
@@ -395,189 +405,194 @@ function openHWEdit(dateStr,pid,lbl,isNote){
   ed.innerHTML=
     '<div class="hw-editor-label">'+(isNote?'\ud83d\udcdd Notes':'\ud83d\udcda Homework')+' \u2014 '+lbl+'</div>'+
     '<textarea class="hw-textarea" placeholder="'+(isNote?'Add notes, reminders, announcements\u2026':'Enter homework, due dates, notes\u2026')+'">'+ex+'</textarea>'+
-    '<div class="hw-editor-actions">'+
-      '<button class="hw-save-btn">Save</button>'+
-      '<button class="hw-cancel-btn">Cancel</button>'+
-      (ex?'<button class="hw-clear-btn">Clear</button>':'')+
-    '</div>';
-  ed.querySelector('.hw-save-btn').onclick=function(){setHW(dateStr,lbl,ed.querySelector('textarea').value);refreshRow(dateStr,pid,lbl)};
-  ed.querySelector('.hw-cancel-btn').onclick=function(){ed.remove()};
-  if(ex)ed.querySelector('.hw-clear-btn').onclick=function(){setHW(dateStr,lbl,'');refreshRow(dateStr,pid,lbl)};
-  ed.addEventListener('click',function(e){e.stopPropagation()});
-  row.appendChild(ed);
-  ed.querySelector('textarea').focus();
+
+```
+'<div class="hw-editor-actions">'+
+  '<button class="hw-save-btn">Save</button>'+
+  '<button class="hw-cancel-btn">Cancel</button>'+
+  (ex?'<button class="hw-clear-btn">Clear</button>':'')+
+'</div>';
+```
+
+ed.querySelector(’.hw-save-btn’).onclick=function(){setHW(dateStr,lbl,ed.querySelector(‘textarea’).value);refreshRow(dateStr,pid,lbl)};
+ed.querySelector(’.hw-cancel-btn’).onclick=function(){ed.remove()};
+if(ex)ed.querySelector(’.hw-clear-btn’).onclick=function(){setHW(dateStr,lbl,’’);refreshRow(dateStr,pid,lbl)};
+ed.addEventListener(‘click’,function(e){e.stopPropagation()});
+row.appendChild(ed);
+ed.querySelector(‘textarea’).focus();
 }
 
 function refreshRow(dateStr,pid,lbl){
-  var row=document.querySelector('.sched-row-wrap[data-period="'+pid+'"]');if(!row)return;
-  var hw=getHW(dateStr)[lbl]||'';
-  var inner=row.querySelector('.sched-period-inner');
-  var badge=row.querySelector('.hw-badge');
-  var hint=row.querySelector('.hw-add-hint');
-  if(hw){
-    row.classList.add('has-hw');
-    if(!badge){badge=document.createElement('div');badge.className='hw-badge';inner.appendChild(badge);}
-    badge.textContent=hw.length>70?hw.slice(0,67)+'\u2026':hw;
-    if(hint)hint.textContent='\u270f\ufe0f edit';
-  }else{
-    row.classList.remove('has-hw');
-    if(badge)badge.remove();
-    if(hint)hint.textContent='+ add';
-  }
-  var e=row.querySelector('.hw-editor');if(e)e.remove();
-  renderBigCal();
+var row=document.querySelector(’.sched-row-wrap[data-period=”’+pid+’”]’);if(!row)return;
+var hw=getHW(dateStr)[lbl]||’’;
+var inner=row.querySelector(’.sched-period-inner’);
+var badge=row.querySelector(’.hw-badge’);
+var hint=row.querySelector(’.hw-add-hint’);
+if(hw){
+row.classList.add(‘has-hw’);
+if(!badge){badge=document.createElement(‘div’);badge.className=‘hw-badge’;inner.appendChild(badge);}
+badge.textContent=hw.length>70?hw.slice(0,67)+’\u2026’:hw;
+if(hint)hint.textContent=’\u270f\ufe0f edit’;
+}else{
+row.classList.remove(‘has-hw’);
+if(badge)badge.remove();
+if(hint)hint.textContent=’+ add’;
+}
+var e=row.querySelector(’.hw-editor’);if(e)e.remove();
+renderBigCal();
 }
 
 // ── Big Calendar ─────────────────────────────────────────────────────
 function renderBigCal(){
-  document.getElementById('cal-month-title').textContent=MONTHS[currentMonth];
-  document.getElementById('cal-year-title').textContent=currentYear+' \u00b7 Semester 2';
-  var grid=document.getElementById('big-grid');grid.innerHTML='';
-  var fd=new Date(currentYear,currentMonth,1),sd=fd.getDay();sd=sd===0?6:sd-1;
-  var dim=new Date(currentYear,currentMonth+1,0).getDate();
-  var dip=new Date(currentYear,currentMonth,0).getDate();
-  var tc=Math.ceil((sd+dim)/7)*7;
-  for(var i=0;i<tc;i++){
-    var dn,yr,mo,io=false;
-    if(i<sd){dn=dip-sd+i+1;mo=currentMonth-1;yr=currentYear;if(mo<0){mo=11;yr--;}io=true;}
-    else if(i>=sd+dim){dn=i-sd-dim+1;mo=currentMonth+1;yr=currentYear;if(mo>11){mo=0;yr++;}io=true;}
-    else{dn=i-sd+1;mo=currentMonth;yr=currentYear;}
-    var k=toKey(yr,mo,dn);
-    var iT=yr===today.getFullYear()&&mo===today.getMonth()&&dn===today.getDate();
-    var iS=selectedDate===k,ns=NO_SCHOOL.has(k);
-    var ib=EVENTS.some(function(e){return e.date===k&&e.type==='break'});
-    var hw=!io&&hasAnyHW(k);
-    var c=document.createElement('div');c.className='cal-day';
-    if(iT)c.classList.add('today');if(iS)c.classList.add('selected');
-    if(ns)c.classList.add('no-school');else if(ib)c.classList.add('break');
-    if(io)c.classList.add('other-month');
-    var ne=document.createElement('div');ne.className='day-num'+(io?' other':'');ne.textContent=dn;
-    if(hw){var hd=document.createElement('span');hd.className='cal-hw-dot';hd.title='Notes/HW';ne.appendChild(hd);}
-    c.appendChild(ne);
-    var el=document.createElement('div');el.className='cal-events-list';
-    var evs=eventsFor(k);
-    evs.slice(0,2).forEach(function(ev){var p=document.createElement('div');p.className='cal-event-chip chip-'+ev.type;p.textContent=ev.name;p.title=ev.name;el.appendChild(p);});
-    if(evs.length>2){var m=document.createElement('div');m.className='cal-event-chip';m.style.cssText='color:var(--text-light);font-size:.58rem;';m.textContent='+'+(evs.length-2)+' more';el.appendChild(m);}
-    if(!io&&ROTATIONS[k]){var re=document.createElement('div');re.style.cssText='font-family:"DM Mono",monospace;font-size:.58rem;color:var(--text-light);margin-top:2px;letter-spacing:.05em;';re.textContent='Rotation '+ROTATIONS[k]+(new Date(k).getDay()===3?' \u00b7 Late Start':'');el.appendChild(re);}
-    c.appendChild(el);
-    (function(key,y,m,d){c.addEventListener('click',function(){selectDay(key,y,m,d);});})(k,yr,mo,dn);
-    grid.appendChild(c);
-  }
+document.getElementById(‘cal-month-title’).textContent=MONTHS[currentMonth];
+document.getElementById(‘cal-year-title’).textContent=currentYear+’ \u00b7 Semester 2’;
+var grid=document.getElementById(‘big-grid’);grid.innerHTML=’’;
+var fd=new Date(currentYear,currentMonth,1),sd=fd.getDay();sd=sd===0?6:sd-1;
+var dim=new Date(currentYear,currentMonth+1,0).getDate();
+var dip=new Date(currentYear,currentMonth,0).getDate();
+var tc=Math.ceil((sd+dim)/7)*7;
+for(var i=0;i<tc;i++){
+var dn,yr,mo,io=false;
+if(i<sd){dn=dip-sd+i+1;mo=currentMonth-1;yr=currentYear;if(mo<0){mo=11;yr–;}io=true;}
+else if(i>=sd+dim){dn=i-sd-dim+1;mo=currentMonth+1;yr=currentYear;if(mo>11){mo=0;yr++;}io=true;}
+else{dn=i-sd+1;mo=currentMonth;yr=currentYear;}
+var k=toKey(yr,mo,dn);
+var iT=yr===today.getFullYear()&&mo===today.getMonth()&&dn===today.getDate();
+var iS=selectedDate===k,ns=NO_SCHOOL.has(k);
+var ib=EVENTS.some(function(e){return e.date===k&&e.type===‘break’});
+var hw=!io&&hasAnyHW(k);
+var c=document.createElement(‘div’);c.className=‘cal-day’;
+if(iT)c.classList.add(‘today’);if(iS)c.classList.add(‘selected’);
+if(ns)c.classList.add(‘no-school’);else if(ib)c.classList.add(‘break’);
+if(io)c.classList.add(‘other-month’);
+var ne=document.createElement(‘div’);ne.className=‘day-num’+(io?’ other’:’’);ne.textContent=dn;
+if(hw){var hd=document.createElement(‘span’);hd.className=‘cal-hw-dot’;hd.title=‘Notes/HW’;ne.appendChild(hd);}
+c.appendChild(ne);
+var el=document.createElement(‘div’);el.className=‘cal-events-list’;
+var evs=eventsFor(k);
+evs.slice(0,2).forEach(function(ev){var p=document.createElement(‘div’);p.className=‘cal-event-chip chip-’+ev.type;p.textContent=ev.name;p.title=ev.name;el.appendChild(p);});
+if(evs.length>2){var m=document.createElement(‘div’);m.className=‘cal-event-chip’;m.style.cssText=‘color:var(–text-light);font-size:.58rem;’;m.textContent=’+’+(evs.length-2)+’ more’;el.appendChild(m);}
+if(!io&&ROTATIONS[k]){var re=document.createElement(‘div’);re.style.cssText=‘font-family:“DM Mono”,monospace;font-size:.58rem;color:var(–text-light);margin-top:2px;letter-spacing:.05em;’;re.textContent=‘Rotation ‘+ROTATIONS[k]+(new Date(k).getDay()===3?’ \u00b7 Late Start’:’’);el.appendChild(re);}
+c.appendChild(el);
+(function(key,y,m,d){c.addEventListener(‘click’,function(){selectDay(key,y,m,d);});})(k,yr,mo,dn);
+grid.appendChild(c);
+}
 }
 
 // ── Day Detail ───────────────────────────────────────────────────────
 function selectDay(k,y,m,d){selectedDate=k;renderBigCal();renderMiniCal();showDetail(k,y,m,d);}
 
 function showDetail(k,y,m,d){
-  var dt=new Date(y,m,d);
-  var dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
-  document.querySelector('.day-name').textContent=dn;
-  document.getElementById('detail-date-text').textContent=MONTHS[m]+' '+d+', '+y;
-  var rot=ROTATIONS[k],badge=document.getElementById('rotation-badge');
-  if(rot){badge.style.display='block';badge.textContent='Rotation '+rot+(dt.getDay()===3?' \u00b7 Late Start':'');}
-  else{badge.style.display='none';}
-  var body=document.getElementById('detail-body');
-  var evs=eventsFor(k),ns=NO_SCHOOL.has(k),iw=dt.getDay()===0||dt.getDay()===6;
-  var html='';
-  if(evs.length){html+='<div class="detail-events-bar">';evs.forEach(function(ev){html+='<span class="cal-event-chip chip-'+ev.type+'">'+ev.name+'</span>';});html+='</div>';}
-  if(iw){html+='<div class="no-class-msg">\ud83c\udf05 Weekend</div>';}
-  else if(ns||!rot){html+='<div class="school-closed-msg">\ud83d\udeab '+(evs.length?evs[0].name:'No School')+'</div>';}
-  else{
-    var sc=getSched(k);
-    if(sc){
-      var hw=getHW(k);
-      html+='<div class="sched-hint">\ud83d\udca1 Click any subject or slot to add homework / notes</div>';
-      html+='<div class="schedule-grid">';
-      sc.forEach(function(s){
-        html+='<div class="sched-time">'+s.time+'</div>';
-        if(s.isPeriod){
-          var ht=hw[s.label]||'',hh=ht.length>0,sd2=esc(k),sl=esc(s.label),nf=s.isNote?1:0;
-          var bh=hh?'<div class="hw-badge">'+(ht.length>70?ht.slice(0,67)+'\u2026':ht)+'</div>':'';
-          var hint=hh?'\u270f\ufe0f edit':(s.isNote?'+ note':'+ add HW');
-          html+=
-            '<div class="sched-row-wrap'+(hh?' has-hw':'')+'" data-period="'+s.id+'" onclick="openHWEdit(\''+sd2+'\',\''+s.id+'\',\''+sl+'\','+nf+')">'+
-              '<div class="sched-period-inner">'+
-                '<div class="sched-item '+s.cls+'">'+s.label+
-                  '<span class="hw-add-hint">'+hint+'</span>'+
-                '</div>'+bh+
-              '</div>'+
-            '</div>';
-        }else{
-          html+='<div class="sched-item '+s.cls+'">'+s.label+'</div>';
-        }
-      });
-      html+='</div>';
-    }
-  }
-  body.innerHTML=html||'<div class="no-class-msg">No events today</div>';
+var dt=new Date(y,m,d);
+var dn=[‘Sunday’,‘Monday’,‘Tuesday’,‘Wednesday’,‘Thursday’,‘Friday’,‘Saturday’][dt.getDay()];
+document.querySelector(’.day-name’).textContent=dn;
+document.getElementById(‘detail-date-text’).textContent=MONTHS[m]+’ ‘+d+’, ‘+y;
+var rot=ROTATIONS[k],badge=document.getElementById(‘rotation-badge’);
+if(rot){badge.style.display=‘block’;badge.textContent=‘Rotation ‘+rot+(dt.getDay()===3?’ \u00b7 Late Start’:’’);}
+else{badge.style.display=‘none’;}
+var body=document.getElementById(‘detail-body’);
+var evs=eventsFor(k),ns=NO_SCHOOL.has(k),iw=dt.getDay()===0||dt.getDay()===6;
+var html=’’;
+if(evs.length){html+=’<div class="detail-events-bar">’;evs.forEach(function(ev){html+=’<span class="cal-event-chip chip-'+ev.type+'">’+ev.name+’</span>’;});html+=’</div>’;}
+if(iw){html+=’<div class="no-class-msg">\ud83c\udf05 Weekend</div>’;}
+else if(ns||!rot){html+=’<div class="school-closed-msg">\ud83d\udeab ‘+(evs.length?evs[0].name:‘No School’)+’</div>’;}
+else{
+var sc=getSched(k);
+if(sc){
+var hw=getHW(k);
+html+=’<div class="sched-hint">\ud83d\udca1 Click any subject or slot to add homework / notes</div>’;
+html+=’<div class="schedule-grid">’;
+sc.forEach(function(s){
+html+=’<div class="sched-time">’+s.time+’</div>’;
+if(s.isPeriod){
+var ht=hw[s.label]||’’,hh=ht.length>0,sd2=esc(k),sl=esc(s.label),nf=s.isNote?1:0;
+var bh=hh?’<div class="hw-badge">’+(ht.length>70?ht.slice(0,67)+’\u2026’:ht)+’</div>’:’’;
+var hint=hh?’\u270f\ufe0f edit’:(s.isNote?’+ note’:’+ add HW’);
+html+=
+‘<div class="sched-row-wrap'+(hh?' has-hw':'')+'" data-period="'+s.id+'" onclick="openHWEdit(\''+sd2+'\',\''+s.id+'\',\''+sl+'\','+nf+')">’+
+‘<div class="sched-period-inner">’+
+‘<div class="sched-item '+s.cls+'">’+s.label+
+‘<span class="hw-add-hint">’+hint+’</span>’+
+‘</div>’+bh+
+‘</div>’+
+‘</div>’;
+}else{
+html+=’<div class="sched-item '+s.cls+'">’+s.label+’</div>’;
+}
+});
+html+=’</div>’;
+}
+}
+body.innerHTML=html||’<div class="no-class-msg">No events today</div>’;
 }
 
 // ── Mini Calendar ────────────────────────────────────────────────────
 function renderMiniCal(){
-  var rt=MONTHS[miniMonth]+' '+miniYear;
-  document.getElementById('mini-title').textContent=rt.length>12?MONTHS[miniMonth].slice(0,3)+' '+miniYear:rt;
-  var g=document.getElementById('mini-grid');g.innerHTML='';
-  ['M','T','W','T','F','S','S'].forEach(function(l){var e=document.createElement('div');e.className='mini-day-label';e.textContent=l;g.appendChild(e);});
-  var fd=new Date(miniYear,miniMonth,1),sd=fd.getDay();sd=sd===0?6:sd-1;
-  var dim=new Date(miniYear,miniMonth+1,0).getDate(),dip=new Date(miniYear,miniMonth,0).getDate();
-  var tc=Math.ceil((sd+dim)/7)*7;
-  for(var i=0;i<tc;i++){
-    var dn,yr,mo,io=false;
-    if(i<sd){dn=dip-sd+i+1;mo=miniMonth-1;yr=miniYear;if(mo<0){mo=11;yr--;}io=true;}
-    else if(i>=sd+dim){dn=i-sd-dim+1;mo=miniMonth+1;yr=miniYear;if(mo>11){mo=0;yr++;}io=true;}
-    else{dn=i-sd+1;mo=miniMonth;yr=miniYear;}
-    var k=toKey(yr,mo,dn),el=document.createElement('div');el.className='mini-day';el.textContent=dn;
-    if(io)el.classList.add('other-month');
-    if(yr===today.getFullYear()&&mo===today.getMonth()&&dn===today.getDate())el.classList.add('today');
-    if(selectedDate===k)el.classList.add('selected');
-    if(NO_SCHOOL.has(k))el.classList.add('no-school');
-    if(eventsFor(k).length)el.classList.add('has-event');
-    (function(key,y,m,d){el.addEventListener('click',function(){currentYear=y;currentMonth=m;renderBigCal();selectDay(key,y,m,d);});})(k,yr,mo,dn);
-    g.appendChild(el);
-  }
+var rt=MONTHS[miniMonth]+’ ‘+miniYear;
+document.getElementById(‘mini-title’).textContent=rt.length>12?MONTHS[miniMonth].slice(0,3)+’ ‘+miniYear:rt;
+var g=document.getElementById(‘mini-grid’);g.innerHTML=’’;
+[‘M’,‘T’,‘W’,‘T’,‘F’,‘S’,‘S’].forEach(function(l){var e=document.createElement(‘div’);e.className=‘mini-day-label’;e.textContent=l;g.appendChild(e);});
+var fd=new Date(miniYear,miniMonth,1),sd=fd.getDay();sd=sd===0?6:sd-1;
+var dim=new Date(miniYear,miniMonth+1,0).getDate(),dip=new Date(miniYear,miniMonth,0).getDate();
+var tc=Math.ceil((sd+dim)/7)*7;
+for(var i=0;i<tc;i++){
+var dn,yr,mo,io=false;
+if(i<sd){dn=dip-sd+i+1;mo=miniMonth-1;yr=miniYear;if(mo<0){mo=11;yr–;}io=true;}
+else if(i>=sd+dim){dn=i-sd-dim+1;mo=miniMonth+1;yr=miniYear;if(mo>11){mo=0;yr++;}io=true;}
+else{dn=i-sd+1;mo=miniMonth;yr=miniYear;}
+var k=toKey(yr,mo,dn),el=document.createElement(‘div’);el.className=‘mini-day’;el.textContent=dn;
+if(io)el.classList.add(‘other-month’);
+if(yr===today.getFullYear()&&mo===today.getMonth()&&dn===today.getDate())el.classList.add(‘today’);
+if(selectedDate===k)el.classList.add(‘selected’);
+if(NO_SCHOOL.has(k))el.classList.add(‘no-school’);
+if(eventsFor(k).length)el.classList.add(‘has-event’);
+(function(key,y,m,d){el.addEventListener(‘click’,function(){currentYear=y;currentMonth=m;renderBigCal();selectDay(key,y,m,d);});})(k,yr,mo,dn);
+g.appendChild(el);
 }
-function miniPrev(){miniMonth--;if(miniMonth<0){miniMonth=11;miniYear--;}renderMiniCal();}
+}
+function miniPrev(){miniMonth–;if(miniMonth<0){miniMonth=11;miniYear–;}renderMiniCal();}
 function miniNext(){miniMonth++;if(miniMonth>11){miniMonth=0;miniYear++;}renderMiniCal();}
 
 // ── Upcoming & All Events ────────────────────────────────────────────
 function renderUpcoming(){
-  var now=new Date();
-  var up=EVENTS.filter(function(e){return new Date(e.date)>=now;}).sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,6);
-  var cm={holiday:'#e74c3c',break:'#27ae60',academic:'#2980b9',exam:'#8e44ad',testing:'#6c3483',event:'#16a085'};
-  document.getElementById('upcoming-list').innerHTML=up.map(function(ev){
-    var d=new Date(ev.date+'T00:00:00');
-    return '<div class="event-item"><div class="event-dot" style="background:'+(cm[ev.type]||'#888')+'"></div><div class="event-content"><div class="event-date">'+MONTHS[d.getMonth()].slice(0,3).toUpperCase()+' '+d.getDate()+'</div><div class="event-name">'+ev.name+'</div></div></div>';
-  }).join('');
+var now=new Date();
+var up=EVENTS.filter(function(e){return new Date(e.date)>=now;}).sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,6);
+var cm={holiday:’#e74c3c’,break:’#27ae60’,academic:’#2980b9’,exam:’#8e44ad’,testing:’#6c3483’,event:’#16a085’};
+document.getElementById(‘upcoming-list’).innerHTML=up.map(function(ev){
+var d=new Date(ev.date+‘T00:00:00’);
+return ‘<div class="event-item"><div class="event-dot" style="background:'+(cm[ev.type]||'#888')+'"></div><div class="event-content"><div class="event-date">’+MONTHS[d.getMonth()].slice(0,3).toUpperCase()+’ ‘+d.getDate()+’</div><div class="event-name">’+ev.name+’</div></div></div>’;
+}).join(’’);
 }
 
 function renderAllEvents(){
-  var bm={};
-  EVENTS.forEach(function(ev){var d=new Date(ev.date+'T00:00:00');var k=d.getFullYear()+'-'+d.getMonth();if(!bm[k])bm[k]={year:d.getFullYear(),month:d.getMonth(),events:[]};bm[k].events.push(ev);});
-  var tl={holiday:'NO SCHOOL',break:'BREAK',academic:'ACADEMIC',exam:'EXAM',testing:'TESTING',event:'EVENT'};
-  var tc={holiday:'#fde8e8',break:'#d4f7e8',academic:'#dce8ff',exam:'#ffe0f0',testing:'#e8e0ff',event:'#e0f4ff'};
-  var tt={holiday:'#9b2a2a',break:'#1a6b4a',academic:'#1a3a7a',exam:'#7a1a50',testing:'#3a1a7a',event:'#0a4a7a'};
-  var dl=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],html='';
-  Object.values(bm).sort(function(a,b){return a.year-b.year||a.month-b.month;}).forEach(function(mb){
-    html+='<div class="sched-month-title">'+MONTHS[mb.month]+' '+mb.year+'</div>';
-    mb.events.forEach(function(ev){
-      var d=new Date(ev.date+'T00:00:00');var rc=ev.type==='holiday'?'holiday':ev.type==='break'?'break-row':'academic';
-      html+='<div class="sched-row '+rc+'"><div class="sched-row-date">'+dl[d.getDay()]+', '+MONTHS[mb.month].slice(0,3)+' '+d.getDate()+'</div><div class="sched-row-name">'+ev.name+'</div><div class="sched-row-badge" style="background:'+tc[ev.type]+';color:'+tt[ev.type]+'">'+(tl[ev.type]||ev.type.toUpperCase())+'</div></div>';
-    });
-  });
-  document.getElementById('all-events-list').innerHTML=html;
+var bm={};
+EVENTS.forEach(function(ev){var d=new Date(ev.date+‘T00:00:00’);var k=d.getFullYear()+’-’+d.getMonth();if(!bm[k])bm[k]={year:d.getFullYear(),month:d.getMonth(),events:[]};bm[k].events.push(ev);});
+var tl={holiday:‘NO SCHOOL’,break:‘BREAK’,academic:‘ACADEMIC’,exam:‘EXAM’,testing:‘TESTING’,event:‘EVENT’};
+var tc={holiday:’#fde8e8’,break:’#d4f7e8’,academic:’#dce8ff’,exam:’#ffe0f0’,testing:’#e8e0ff’,event:’#e0f4ff’};
+var tt={holiday:’#9b2a2a’,break:’#1a6b4a’,academic:’#1a3a7a’,exam:’#7a1a50’,testing:’#3a1a7a’,event:’#0a4a7a’};
+var dl=[‘Sun’,‘Mon’,‘Tue’,‘Wed’,‘Thu’,‘Fri’,‘Sat’],html=’’;
+Object.values(bm).sort(function(a,b){return a.year-b.year||a.month-b.month;}).forEach(function(mb){
+html+=’<div class="sched-month-title">’+MONTHS[mb.month]+’ ‘+mb.year+’</div>’;
+mb.events.forEach(function(ev){
+var d=new Date(ev.date+‘T00:00:00’);var rc=ev.type===‘holiday’?‘holiday’:ev.type===‘break’?‘break-row’:‘academic’;
+html+=’<div class="sched-row '+rc+'"><div class="sched-row-date">’+dl[d.getDay()]+’, ‘+MONTHS[mb.month].slice(0,3)+’ ‘+d.getDate()+’</div><div class="sched-row-name">’+ev.name+’</div><div class="sched-row-badge" style="background:'+tc[ev.type]+';color:'+tt[ev.type]+'">’+(tl[ev.type]||ev.type.toUpperCase())+’</div></div>’;
+});
+});
+document.getElementById(‘all-events-list’).innerHTML=html;
 }
 
 // ── Nav ──────────────────────────────────────────────────────────────
-function prevMonth(){currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}miniMonth=currentMonth;miniYear=currentYear;renderBigCal();renderMiniCal();}
+function prevMonth(){currentMonth–;if(currentMonth<0){currentMonth=11;currentYear–;}miniMonth=currentMonth;miniYear=currentYear;renderBigCal();renderMiniCal();}
 function nextMonth(){currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}miniMonth=currentMonth;miniYear=currentYear;renderBigCal();renderMiniCal();}
 function goToday(){currentYear=today.getFullYear();currentMonth=today.getMonth();miniYear=currentYear;miniMonth=currentMonth;renderBigCal();renderMiniCal();}
-function switchView(v,btn){document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(v==='calendar'){document.getElementById('calendar-view').classList.remove('hidden');document.getElementById('schedule-view').classList.remove('active');}else{document.getElementById('calendar-view').classList.add('hidden');document.getElementById('schedule-view').classList.add('active');}}
+function switchView(v,btn){document.querySelectorAll(’.nav-btn’).forEach(function(b){b.classList.remove(‘active’);});btn.classList.add(‘active’);if(v===‘calendar’){document.getElementById(‘calendar-view’).classList.remove(‘hidden’);document.getElementById(‘schedule-view’).classList.remove(‘active’);}else{document.getElementById(‘calendar-view’).classList.add(‘hidden’);document.getElementById(‘schedule-view’).classList.add(‘active’);}}
 
 // ── Init ─────────────────────────────────────────────────────────────
-if(today>=new Date('2026-01-01')&&today<=new Date('2026-05-31')){currentYear=today.getFullYear();currentMonth=today.getMonth();}else{currentYear=2026;currentMonth=0;}
+if(today>=new Date(‘2026-01-01’)&&today<=new Date(‘2026-05-31’)){currentYear=today.getFullYear();currentMonth=today.getMonth();}else{currentYear=2026;currentMonth=0;}
 miniYear=currentYear;miniMonth=currentMonth;
 renderBigCal();renderMiniCal();renderUpcoming();renderAllEvents();
 </script>
+
 </body>
 </html>"""
 
